@@ -43,8 +43,8 @@ self.addEventListener('fetch', (event) => {
 
         return fetch(event.request).then(
           (response) => {
-            // Check if we received a valid response
-            if(!response || response.status !== 200 || response.type !== 'basic') {
+            // Check if we received a valid response (allow opaque/cors responses for external CDN/fonts)
+            if(!response || (response.status !== 200 && response.status !== 0)) {
               return response;
             }
 

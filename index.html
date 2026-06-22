@@ -17,64 +17,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/forge/1.3.1/forge.min.js">
-        function updateOpenSSLCommand() {
-            const cn = document.getElementById('common-name').value;
-            const o = document.getElementById('organization').value;
-            const ou = document.getElementById('org-unit').value;
-            const c = document.getElementById('country').value;
-            const l = document.getElementById('city').value;
-            const st = document.getElementById('state').value;
-            const email = document.getElementById('email').value;
-
-            let subj = '';
-            if (cn) subj += `/CN=${cn}`;
-            if (o) subj += `/O=${o}`;
-            if (ou) subj += `/OU=${ou}`;
-            if (c) subj += `/C=${c}`;
-            if (l) subj += `/L=${l}`;
-            if (st) subj += `/ST=${st}`;
-            if (email) subj += `/emailAddress=${email}`;
-
-            const filename = cn ? cn.replace(/[^a-zA-Z0-9.-]/g, '_') : 'private';
-            const mtlsChecked = document.getElementById('mtls-eku').checked;
-            const extParam = mtlsChecked ? ' -addext "extendedKeyUsage=serverAuth,clientAuth"' : '';
-            const cmd = `openssl req -new -newkey rsa:2048 -nodes -keyout ${filename}.key -out ${filename}.csr -subj "${subj}"${extParam}`;
-            document.getElementById('openssl-cmd').innerText = cmd;
-        }
-
-        // Attach listeners to update dynamically
-        ['common-name', 'organization', 'org-unit', 'country', 'city', 'state', 'email'].forEach(id => {
-            document.getElementById(id).addEventListener('input', updateOpenSSLCommand);
-        });
-        document.getElementById('mtls-eku').addEventListener('change', updateOpenSSLCommand);
-        
-        // Initial call
-        updateOpenSSLCommand();
-
-        function copyCodeContent(elementId, btnElement) {
-            const codeEl = document.getElementById(elementId);
-            if (!codeEl.innerText) return;
-
-            navigator.clipboard.writeText(codeEl.innerText).then(() => {
-                const originalText = btnElement.innerText;
-                btnElement.innerText = 'Copied!';
-                btnElement.style.background = 'rgba(15, 118, 110, 0.4)';
-                btnElement.style.color = '#0f766e';
-                btnElement.style.borderColor = 'rgba(15, 118, 110, 0.8)';
-
-                setTimeout(() => {
-                    btnElement.innerText = originalText;
-                    btnElement.style.background = '';
-                    btnElement.style.color = '';
-                    btnElement.style.borderColor = '';
-                }, 1800);
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-            });
-        }
-
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/forge/1.3.1/forge.min.js"></script>
     <style>
         :root {
             --bg: #0b0f19;
@@ -985,9 +928,19 @@
         }
 
         .footer-links a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             color: var(--muted);
             text-decoration: none;
             transition: color var(--transition);
+        }
+
+        .footer-links svg {
+            width: 14px;
+            height: 14px;
+            flex: 0 0 auto;
+            fill: currentColor;
         }
 
         .footer-links a:hover {
@@ -1276,7 +1229,7 @@
                     </div>
                 </div>
 
-                <div class="hero-side"></p>
+                <div class="hero-side">
                     <div class="workflow">
                         <div class="step">
                             <label>01 / Generation</label>
@@ -1447,18 +1400,33 @@
 
         <footer>
             <div class="footer-inner">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div>
-                        <strong>PKI Workshop</strong>
-                        <div style="margin-top: 6px;">feedback, suggestions and bug submissions.</div>
-                    </div>
-                </div>
                 <div class="footer-links">
-                    <a href="#" >Support</a>
+                    <a href="https://github.com/lophtious/pki_web" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 2C6.477 2 2 6.58 2 12.241c0 4.526 2.865 8.36 6.839 9.717.5.096.682-.22.682-.49 0-.242-.01-.883-.014-1.733-2.782.621-3.369-1.37-3.369-1.37-.454-1.189-1.11-1.505-1.11-1.505-.907-.636.069-.623.069-.623 1.003.072 1.531 1.052 1.531 1.052.892 1.556 2.341 1.107 2.91.846.091-.661.35-1.11.636-1.365-2.22-.26-4.555-1.14-4.555-5.07 0-1.12.39-2.035 1.03-2.754-.104-.26-.446-1.305.098-2.72 0 0 .84-.274 2.75 1.051a9.48 9.48 0 0 1 2.5-.345c.85.004 1.706.117 2.5.345 1.91-1.325 2.748-1.051 2.748-1.051.546 1.415.204 2.46.1 2.72.64.719 1.028 1.634 1.028 2.754 0 3.939-2.339 4.806-4.566 5.061.36.31.68.923.68 1.861 0 1.344-.012 2.428-.012 2.76 0 .273.18.592.688.49A10.25 10.25 0 0 0 22 12.241C22 6.58 17.523 2 12 2Z"></path>
+                        </svg>
+                        <span>Repo</span>
+                    </a>
+                    <a href="https://github.com/lophtious/pki_web/issues/new" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 2C6.477 2 2 6.58 2 12.241c0 4.526 2.865 8.36 6.839 9.717.5.096.682-.22.682-.49 0-.242-.01-.883-.014-1.733-2.782.621-3.369-1.37-3.369-1.37-.454-1.189-1.11-1.505-1.11-1.505-.907-.636.069-.623.069-.623 1.003.072 1.531 1.052 1.531 1.052.892 1.556 2.341 1.107 2.91.846.091-.661.35-1.11.636-1.365-2.22-.26-4.555-1.14-4.555-5.07 0-1.12.39-2.035 1.03-2.754-.104-.26-.446-1.305.098-2.72 0 0 .84-.274 2.75 1.051a9.48 9.48 0 0 1 2.5-.345c.85.004 1.706.117 2.5.345 1.91-1.325 2.748-1.051 2.748-1.051.546 1.415.204 2.46.1 2.72.64.719 1.028 1.634 1.028 2.754 0 3.939-2.339 4.806-4.566 5.061.36.31.68.923.68 1.861 0 1.344-.012 2.428-.012 2.76 0 .273.18.592.688.49A10.25 10.25 0 0 0 22 12.241C22 6.58 17.523 2 12 2Z"></path>
+                        </svg>
+                        <span>Fixes</span>
+                    </a>
+                    <a href="https://github.com/lophtious/pki_web/pulls" target="_blank" rel="noopener noreferrer">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 2C6.477 2 2 6.58 2 12.241c0 4.526 2.865 8.36 6.839 9.717.5.096.682-.22.682-.49 0-.242-.01-.883-.014-1.733-2.782.621-3.369-1.37-3.369-1.37-.454-1.189-1.11-1.505-1.11-1.505-.907-.636.069-.623.069-.623 1.003.072 1.531 1.052 1.531 1.052.892 1.556 2.341 1.107 2.91.846.091-.661.35-1.11.636-1.365-2.22-.26-4.555-1.14-4.555-5.07 0-1.12.39-2.035 1.03-2.754-.104-.26-.446-1.305.098-2.72 0 0 .84-.274 2.75 1.051a9.48 9.48 0 0 1 2.5-.345c.85.004 1.706.117 2.5.345 1.91-1.325 2.748-1.051 2.748-1.051.546 1.415.204 2.46.1 2.72.64.719 1.028 1.634 1.028 2.754 0 3.939-2.339 4.806-4.566 5.061.36.31.68.923.68 1.861 0 1.344-.012 2.428-.012 2.76 0 .273.18.592.688.49A10.25 10.25 0 0 0 22 12.241C22 6.58 17.523 2 12 2Z"></path>
+                        </svg>
+                        <span>PRs</span>
+                    </a>
                 </div>
             </div>
             <div style="margin-top: 16px; font-size: 11px; text-align: center; color: var(--muted); border-top: 1px solid var(--footer-divider); padding-top: 16px;">
-                <img src="pki_logo.svg" alt="PKI Logo" style="width: 48px; height: 48px; border-radius: 8px;"><br/>
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent); opacity: 0.8; margin-bottom: 8px; filter: drop-shadow(0 0 8px var(--accent-glow));">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <circle cx="12" cy="10" r="3" />
+                    <path d="M12 13v6l2-2m-2-2h2" />
+                </svg><br/>
                 &copy; 2026 PKI Workshop. All rights reserved.
             </div>
         </footer>
@@ -1552,7 +1520,7 @@
                     const pki = forge.pki;
                     const keys = pki.rsa.generateKeyPair(2048);
 
-                    const pemPrivate = pki.encryptRsaPrivateKey(keys.privateKey, passphrase, { algorithm: '3des' });
+                    const pemPrivate = pki.encryptRsaPrivateKey(keys.privateKey, passphrase, { algorithm: 'aes256' });
                     document.getElementById('private-key').value = pemPrivate;
 
                     const csr = pki.createCertificationRequest();

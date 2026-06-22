@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        (function () {
+            var stored = localStorage.getItem('theme');
+            var theme = stored || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PKI Workshop</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f19">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/forge/1.3.1/forge.min.js">
+        function updateOpenSSLCommand() {
+            const cn = document.getElementById('common-name').value;
+            const o = document.getElementById('organization').value;
+            const ou = document.getElementById('org-unit').value;
+            const c = document.getElementById('country').value;
+            const l = document.getElementById('city').value;
+            const st = document.getElementById('state').value;
+            const email = document.getElementById('email').value;
+
+            let subj = '';
+            if (cn) subj += `/CN=${cn}`;
+            if (o) subj += `/O=${o}`;
+            if (ou) subj += `/OU=${ou}`;
+            if (c) subj += `/C=${c}`;
+            if (l) subj += `/L=${l}`;
+            if (st) subj += `/ST=${st}`;
+            if (email) subj += `/emailAddress=${email}`;
+
+            const filename = cn ? cn.replace(/[^a-zA-Z0-9.-]/g, '_') : 'private';
+            const mtlsChecked = document.getElementById('mtls-eku').checked;
+            const extParam = mtlsChecked ? ' -addext "extendedKeyUsage=serverAuth,clientAuth"' : '';
+            const cmd = `openssl req -new -newkey rsa:2048 -nodes -keyout ${filename}.key -out ${filename}.csr -subj "${subj}"${extParam}`;
+            document.getElementById('openssl-cmd').innerText = cmd;
+        }
+
+        // Attach listeners to update dynamically
+        ['common-name', 'organization', 'org-unit', 'country', 'city', 'state', 'email'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateOpenSSLCommand);
+        });
+        document.getElementById('mtls-eku').addEventListener('change', updateOpenSSLCommand);
+        
+        // Initial call
+        updateOpenSSLCommand();
+
+        function copyCodeContent(elementId, btnElement) {
+            const codeEl = document.getElementById(elementId);
+            if (!codeEl.innerText) return;
+
+            navigator.clipboard.writeText(codeEl.innerText).then(() => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = 'Copied!';
+                btnElement.style.background = 'rgba(15, 118, 110, 0.4)';
+                btnElement.style.color = '#0f766e';
+                btnElement.style.borderColor = 'rgba(15, 118, 110, 0.8)';
+
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.background = '';
+                    btnElement.style.color = '';
+                    btnElement.style.borderColor = '';
+                }, 1800);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+    </script>
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --bg-soft: #111827;
+            --surface: rgba(30, 41, 59, 0.4);
+            --surface-strong: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --muted-strong: #cbd5e1;
+            --accent: #00f0ff;
+            --accent-glow: rgba(0, 240, 255, 0.4);
+            --accent-2: #b026ff;
+            --accent-2-glow: rgba(176, 38, 255, 0.4);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --heading-from: #fff;
+            --emphasis: #fff;
+            --topbar-bg: rgba(15, 23, 42, 0.5);
+            --topbar-bg-hover: rgba(15, 23, 42, 0.6);
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --input-bg-hover: rgba(30, 41, 59, 0.6);
+            --input-bg-focus: rgba(15, 23, 42, 0.8);
+            --input-inset-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            --code-bg: rgba(0, 0, 0, 0.4);
+            --code-inset-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
+            --code-text-alt: #e879f9;
+            --code-block-bg: rgba(0, 0, 0, 0.6);
+            --side-menu-bg: rgba(15, 23, 42, 0.85);
+            --overlay-bg: rgba(0, 0, 0, 0.4);
+            --grid-line: rgba(255, 255, 255, 0.03);
+            --step-bg: rgba(15, 23, 42, 0.4);
+            --step-bg-hover: rgba(30, 41, 59, 0.5);
+            --metric-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.6));
+            --btn-dl-color: #d8b4fe;
+            --spinner-top: #fff;
+            --footer-divider: rgba(15, 23, 42, 0.08);
+            --orb-opacity: 0.5;
+            --body-gradient-1: rgba(176, 38, 255, 0.08);
+            --body-gradient-2: rgba(0, 240, 255, 0.08);
+            --on-accent: #fff;
+            --metric-border-top: rgba(255, 255, 255, 0.1);
+            --scrollbar-track: rgba(0, 0, 0, 0.2);
+            --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+            --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
+            --scrollbar-thumb-border: rgba(0, 0, 0, 0.2);
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 14px;
+            --transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="light"] {
+            color-scheme: light;
+            --bg: #f8fafc;
+            --bg-soft: #f1f5f9;
+            --surface: rgba(255, 255, 255, 0.85);
+            --surface-strong: rgba(255, 255, 255, 0.95);
+            --border: rgba(15, 23, 42, 0.1);
+            --border-hover: rgba(15, 23, 42, 0.18);
+            --text: #0f172a;
+            --muted: #64748b;
+            --muted-strong: #475569;
+            --accent: #0891b2;
+            --accent-glow: rgba(8, 145, 178, 0.25);
+            --accent-2: #9333ea;
+            --accent-2-glow: rgba(147, 51, 234, 0.25);
+            --shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
+            --heading-from: #0f172a;
+            --emphasis: #0f172a;
+            --topbar-bg: rgba(255, 255, 255, 0.85);
+            --topbar-bg-hover: rgba(255, 255, 255, 0.95);
+            --input-bg: rgba(241, 245, 249, 0.95);
+            --input-bg-hover: rgba(226, 232, 240, 0.95);
+            --input-bg-focus: #fff;
+            --input-inset-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06);
+            --code-bg: rgba(241, 245, 249, 0.95);
+            --code-inset-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.08);
+            --code-text-alt: #a855f7;
+            --code-block-bg: rgba(241, 245, 249, 0.95);
+            --side-menu-bg: rgba(255, 255, 255, 0.95);
+            --overlay-bg: rgba(15, 23, 42, 0.25);
+            --grid-line: rgba(15, 23, 42, 0.06);
+            --step-bg: rgba(241, 245, 249, 0.9);
+            --step-bg-hover: rgba(226, 232, 240, 0.95);
+            --metric-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(241, 245, 249, 0.95));
+            --btn-dl-color: #9333ea;
+            --spinner-top: #0f172a;
+            --footer-divider: rgba(15, 23, 42, 0.08);
+            --orb-opacity: 0.25;
+            --body-gradient-1: rgba(147, 51, 234, 0.08);
+            --body-gradient-2: rgba(8, 145, 178, 0.08);
+            --on-accent: #fff;
+            --metric-border-top: rgba(15, 23, 42, 0.08);
+            --scrollbar-track: rgba(15, 23, 42, 0.06);
+            --scrollbar-thumb: rgba(15, 23, 42, 0.15);
+            --scrollbar-thumb-hover: rgba(15, 23, 42, 0.25);
+            --scrollbar-thumb-border: rgba(241, 245, 249, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            color-scheme: dark;
+        }
+
+        html[data-theme="light"] {
+            color-scheme: light;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(circle at 15% 50%, var(--body-gradient-1), transparent 25%),
+                radial-gradient(circle at 85% 30%, var(--body-gradient-2), transparent 25%);
+            overflow-x: hidden;
+            transition: background-color var(--transition), color var(--transition);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: var(--orb-opacity);
+            pointer-events: none;
+            z-index: 0;
+            animation: float 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(20px, -20px) scale(1.05); }
+            100% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .orb-1 {
+            width: 500px;
+            height: 500px;
+            top: -150px;
+            left: -150px;
+            background: rgba(176, 38, 255, 0.2);
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 600px;
+            height: 600px;
+            bottom: -200px;
+            right: -200px;
+            background: rgba(0, 240, 255, 0.15);
+            animation-delay: -5s;
+        }
+
+        .orb-3 {
+            width: 400px;
+            height: 400px;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(56, 189, 248, 0.1);
+            animation-delay: -10s;
+        }
+
+        .shell {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar,
+        .content,
+        .footer-inner {
+            width: min(1200px, calc(100% - 32px));
+            margin: 0 auto;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 16px 24px;
+            margin-top: 24px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--topbar-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: var(--shadow);
+            transition: all var(--transition);
+        }
+
+        .topbar:hover {
+            border-color: var(--border-hover);
+            background: var(--topbar-bg-hover);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-mark {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            color: var(--on-accent);
+            display: grid;
+            place-items: center;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+            flex: 0 0 auto;
+            position: relative;
+        }
+
+        .brand-mark::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            filter: blur(8px);
+            opacity: 0.5;
+            z-index: -1;
+        }
+
+        .brand-copy h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            background: linear-gradient(to right, var(--heading-from), var(--muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-copy p {
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .topbar-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .topbar-links a {
+            color: var(--muted-strong);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color var(--transition);
+        }
+
+        .topbar-links a:hover {
+            color: var(--accent);
+            text-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .theme-toggle {
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 42px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--muted-strong);
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        html[data-theme="dark"] .theme-toggle .icon-sun,
+        html:not([data-theme]) .theme-toggle .icon-sun {
+            display: none;
+        }
+
+        html[data-theme="light"] .theme-toggle .icon-moon {
+            display: none;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 999px;
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--accent);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-size: 12px;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+        }
+
+        .status-pill::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent), 0 0 12px var(--accent);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .content {
+            flex: 1;
+            display: grid;
+            gap: 32px;
+            padding: 32px 0 64px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 24px;
+            padding: 40px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            background: var(--surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--accent);
+        }
+
+        .eyebrow::before {
+            content: '';
+            width: 40px;
+            height: 2px;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .hero h2 {
+            margin-top: 16px;
+            font-size: clamp(40px, 5vw, 72px);
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--heading-from) 30%, var(--muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            margin-top: 20px;
+            color: var(--muted);
+            font-size: 18px;
+            line-height: 1.6;
+            max-width: 50ch;
+        }
+
+        .hero-actions {
+            margin-top: 32px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .hero-chip,
+        .metric,
+        .step,
+        .panel,
+        .output-card {
+            border: 1px solid var(--border);
+            background: var(--surface-strong);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: var(--radius-lg);
+            transition: all var(--transition);
+        }
+
+        .hero-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            color: var(--muted-strong);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .hero-chip:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .hero-chip strong {
+            color: var(--emphasis);
+            font-weight: 700;
+        }
+
+        .hero-side {
+            display: grid;
+            gap: 16px;
+            align-content: start;
+        }
+
+        .metric {
+            padding: 24px;
+            background: var(--metric-bg);
+            border-top: 1px solid var(--metric-border-top);
+        }
+
+        .metric label,
+        .step label,
+        .section-label {
+            display: block;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 12px;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 12px;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--emphasis);
+        }
+
+        .metric p,
+        .step p,
+        .section-note {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+
+        .workflow {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .step {
+            padding: 20px;
+            background: var(--step-bg);
+        }
+
+        .step:hover {
+            background: var(--step-bg-hover);
+            border-color: var(--border-hover);
+        }
+
+        .step strong {
+            display: block;
+            margin-top: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--muted-strong);
+        }
+
+        .panel {
+            padding: 32px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 32px;
+        }
+
+        .panel-head h3,
+        .output-head h3 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--emphasis);
+            margin-top: 8px;
+        }
+
+        fieldset {
+            border: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 24px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 10px;
+        }
+
+        label {
+            color: var(--muted-strong);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text);
+            border-radius: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: all var(--transition);
+            box-shadow: var(--input-inset-shadow);
+        }
+
+        input[type="text"],
+        input[type="email"] {
+            min-height: 56px;
+            padding: 0 20px;
+            font-size: 15px;
+        }
+
+        input[type="text"]:hover,
+        input[type="email"]:hover,
+        textarea:hover {
+            border-color: var(--border-hover);
+            background: var(--input-bg-hover);
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow), var(--input-inset-shadow);
+            background: var(--input-bg-focus);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--muted);
+            opacity: 0.6;
+        }
+
+        .passphrase-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .passphrase-row input {
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            font-weight: 500;
+            font-size: 16px;
+            text-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: 1px solid transparent;
+            border-radius: 16px;
+            min-height: 52px;
+            padding: 0 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .btn:hover::before {
+            opacity: 1;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            min-height: 60px;
+            width: 100%;
+            margin-top: 32px;
+            background: linear-gradient(135deg, var(--accent-2), var(--accent));
+            color: var(--on-accent);
+            border: none;
+            box-shadow: 0 10px 30px var(--accent-2-glow);
+            font-size: 18px;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 15px 40px rgba(176, 38, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            border-color: var(--border);
+            backdrop-filter: blur(8px);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent);
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .btn-sm {
+            min-height: 42px;
+            padding: 0 16px;
+            font-size: 14px;
+            border-radius: 12px;
+        }
+
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .btn-copy:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0, 240, 255, 0.05);
+        }
+
+        .btn-dl {
+            background: rgba(176, 38, 255, 0.1);
+            color: var(--btn-dl-color);
+            border-color: rgba(176, 38, 255, 0.3);
+        }
+
+        .btn-dl:hover {
+            border-color: var(--accent-2);
+            background: rgba(176, 38, 255, 0.2);
+            box-shadow: 0 0 15px var(--accent-2-glow);
+            color: var(--on-accent);
+        }
+
+        .btn-primary:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+            box-shadow: none;
+            filter: grayscale(0.5);
+        }
+
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: var(--spinner-top);
+            animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .outputs {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .output-card {
+            padding: 28px;
+            background: var(--surface);
+            border-color: var(--border);
+            position: relative;
+        }
+        
+        .output-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            opacity: 0.5;
+        }
+        
+        .output-card:last-child::before {
+            background: linear-gradient(90deg, var(--accent-2), transparent);
+        }
+
+        .output-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .output-head h3 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+        }
+
+        .output-head svg {
+            width: 22px;
+            height: 22px;
+            color: var(--accent);
+            flex: 0 0 auto;
+            filter: drop-shadow(0 0 5px var(--accent-glow));
+        }
+
+        .output-card:last-child .output-head svg {
+            color: var(--accent-2);
+            filter: drop-shadow(0 0 5px var(--accent-2-glow));
+        }
+
+        .output-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        textarea {
+            min-height: 320px;
+            resize: vertical;
+            padding: 24px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--accent);
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            box-shadow: var(--code-inset-shadow);
+            text-shadow: 0 0 2px rgba(0, 240, 255, 0.2);
+        }
+        
+        .output-card:last-child textarea {
+            color: var(--code-text-alt);
+            text-shadow: 0 0 2px rgba(232, 121, 249, 0.2);
+        }
+
+        textarea::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 8px;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 8px;
+            border: 3px solid var(--scrollbar-thumb-border);
+        }
+        
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: var(--scrollbar-thumb-hover);
+        }
+
+        footer {
+            padding: 0 0 40px;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 14px;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .footer-inner strong {
+            color: var(--emphasis);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        .footer-links a {
+            color: var(--muted);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 980px) {
+            .hero,
+            .outputs,
+            .workflow,
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                border-radius: 20px;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .topbar,
+            .content,
+            .footer-inner {
+                width: min(100% - 32px, 1200px);
+            }
+
+            .topbar {
+                padding: 20px;
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .panel,
+            .hero,
+            .output-card {
+                padding: 24px;
+            }
+
+            .hero h2 {
+                max-width: none;
+            }
+
+            .passphrase-row {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    
+        /* Hamburger Menu */
+        .menu-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            z-index: 100;
+        }
+
+        .menu-btn span {
+            display: block;
+            width: 24px;
+            height: 2px;
+            background: var(--text);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px var(--accent-glow);
+        }
+
+        .menu-btn.active span:nth-child(1) {
+            transform: translateY(8px) rotate(45deg);
+        }
+
+        .menu-btn.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .menu-btn.active span:nth-child(3) {
+            transform: translateY(-8px) rotate(-45deg);
+        }
+
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -320px;
+            width: 320px;
+            height: 100vh;
+            background: var(--side-menu-bg);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border-left: 1px solid var(--border);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            z-index: 50;
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 100px 32px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .side-menu.open {
+            right: 0;
+        }
+
+        .side-menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay-bg);
+            backdrop-filter: blur(4px);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .side-menu-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .side-menu h3 {
+            color: var(--accent);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 8px;
+        }
+
+        .side-menu a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid transparent;
+        }
+
+        .side-menu a:hover, .side-menu a.active-tool {
+            background: rgba(0, 240, 255, 0.1);
+            border-color: var(--border-hover);
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+            transform: translateX(4px);
+        }
+
+    
+        .code-block {
+            position: relative;
+            background: var(--code-block-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 24px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--accent);
+            box-shadow: var(--code-inset-shadow);
+            margin-top: 16px;
+            overflow-x: auto;
+        }
+
+        .code-block code {
+            display: block;
+            padding-right: 80px;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .code-block .btn-copy-code {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .code-block .btn-copy-code:hover {
+            background: rgba(0, 240, 255, 0.2);
+            color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="shell">
+
+    <div class="side-menu-overlay" id="side-menu-overlay"></div>
+    <nav class="side-menu" id="side-menu">
+        <div>
+            <h3>Tools</h3>
+            <a href="#" class="active-tool">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                Key Generator
+            </a>
+            <a href="#">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+                CSR Decoder
+            </a>
+            <a href="#">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Create PFX
+            </a>
+        </div>
+    </nav>
+
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="10" width="18" height="11" rx="2"></rect>
+                        <path d="M7 10V7a5 5 0 0 1 10 0v3"></path>
+                    </svg>
+                </div>
+                <div class="brand-copy">
+                    <h1>PKI WORKSHOP</h1>
+                    <p>Generate CSR and Private Key</p>
+                </div>
+            </div>
+
+            <div class="topbar-links">
+                <span class="status-pill">Online</span>
+
+                <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+
+                <button class="menu-btn" id="menu-btn" aria-label="Toggle Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </header>
+
+        <main class="content">
+            <section class="hero">
+                <div>
+                    <span class="eyebrow">Private Key Generation</span>
+                    <h2>...</h2>
+                    <p>
+                        Generate a secure protected/encrypted Private Key and Certificate Signing Request (CSR). 
+                    </p>
+                    <p>To generate a Private Key and a Certificate Signing Request (CSR), you typically use a command-line tool like OpenSSL. </p>
+                    <p>This Web Based tool will automate creation via Web Browser, and display the OpenSSL commands that you can use via a Terminal.</p>
+
+                    <div class="hero-actions">
+                        <div class="hero-chip"><strong>2048-bit RSA</strong> protected key generation</div>
+                        <div class="hero-chip"><strong>PEM export</strong> for private key and CSR</div>
+                    </div>
+                </div>
+
+                <div class="hero-side"></p>
+                    <div class="workflow">
+                        <div class="step">
+                            <label>01 / Generation</label>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="margin-top: 12px; filter: drop-shadow(0 0 5px var(--accent-glow));">
+                                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                            </svg>
+                            <strong>Private Key & CSR</strong>
+                        </div>
+                        <div class="step">
+                            <label>02 / Signing</label>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="margin-top: 12px; filter: drop-shadow(0 0 5px var(--accent-glow));">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <strong>CA / Validation</strong>
+                        </div>
+                        <div class="step">
+                            <label>03 / Deployment</label>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="margin-top: 12px; filter: drop-shadow(0 0 5px var(--accent-glow));">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <strong>Installation</strong>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="workspace" class="panel">
+                <div class="panel-head">
+                    <div>
+                        <span class="section-label">Workspace</span>
+                        <h3>Certificate Attributes</h3>
+                        <p class="section-note">Everything below feeds the private key and CSR generation flow.</p>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="passphrase">Private Key Passphrase</label>
+                        <div class="passphrase-row">
+                            <input type="text" id="passphrase" readonly>
+                            <button class="btn btn-secondary" type="button" id="regen-pass-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 2v6h-6"></path>
+                                    <path d="M3 12a9 9 0 1 0 2.13-5.87L9 2"></path>
+                                </svg>
+                                Refresh Passphrase
+                            </button>
+                        </div>
+                    </div>
+
+                    <fieldset>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="common-name">Common Name (CN)</label>
+                                <input type="text" id="common-name" value="mtls.company.com" placeholder="e.g. api.domain.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="organization">Organization (O)</label>
+                                <input type="text" id="organization" value="Contoso, LLC" placeholder="Enterprise Infrastructure LLC">
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="org-unit">Organizational Unit (OU)</label>
+                                <input type="text" id="org-unit" value="Security Operations" placeholder="Security Operations">
+                            </div>
+                            <div class="form-group">
+                                <label for="country">Country Code (C)</label>
+                                <input type="text" id="country" value="US" placeholder="US" maxlength="2">
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label for="city">City / Locality (L)</label>
+                                <input type="text" id="city" value="Delaware" placeholder="e.g. San Francisco">
+                            </div>
+                            <div class="form-group">
+                                <label for="state">State / Province (ST)</label>
+                                <input type="text" id="state" value="California" placeholder="e.g. California">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" value="infosec@company.com" placeholder="e.g. admin@company.com">
+                            </div>
+                        <div class="form-group" style="margin-top: 12px; margin-bottom: 8px;">
+                            <label class="checkbox-wrapper" style="display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--text);">
+                                <input type="checkbox" id="mtls-eku" style="width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer;">
+                                <span style="font-size: 14px; font-weight: 500;">Enable: Extended Key Usage (EKU) [clientAuth, serverAuth]</span>
+                            </label>
+                        </div>
+
+                        </div>
+                    </fieldset>
+
+                    <button class="btn btn-primary" id="generate-btn">
+                        <span id="btn-text">Generate Private Key & CSR</span>
+                        <div class="spinner" id="btn-spinner"></div>
+                    </button>
+                </div>
+            </section>
+
+
+            <section id="cli-equivalent" class="panel" style="margin-top: 24px; margin-bottom: 24px;">
+                <div class="panel-head" style="margin-bottom: 0;">
+                    <div>
+                        <span class="section-label">CLI Equivalent</span>
+                        <h3>OpenSSL Command</h3>
+                        <p class="section-note">Run this command in your terminal to generate an identical key and CSR.</p>
+                    </div>
+                </div>
+                <div class="code-block">
+                    <button class="btn-copy-code" onclick="copyCodeContent('openssl-cmd', this)">Copy</button>
+                    <code id="openssl-cmd">openssl req -new -newkey rsa:2048 -nodes -keyout private.key -out request.csr -subj "/CN=mtls.company.com/O=Contoso, LLC/OU=Security Operations/C=US/L=Delaware/ST=California/emailAddress=infosec@company.com"</code>
+                </div>
+            </section>
+
+            <section id="outputs" class="outputs" style="display: none;">
+                <article class="output-card">
+                    <div class="output-head">
+                        <div>
+                            <span class="section-label">KEY</span>
+                            <h3>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                                </svg>
+                                Encrypted Private Key
+                            </h3>
+                        </div>
+                        <div class="output-actions">
+                            <button class="btn btn-sm btn-copy" onclick="copyContent('private-key', this)">Copy</button>
+                            <button class="btn btn-sm btn-dl" onclick="downloadContent('private-key', '.key')">Download</button>
+                        </div>
+                    </div>
+                    <textarea id="private-key" readonly placeholder="Generate to reveal the encrypted key material."></textarea>
+                </article>
+
+                <article class="output-card">
+                    <div class="output-head">
+                        <div>
+                            <span class="section-label">CSR</span>
+                            <h3>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                Certificate Signing Request
+                            </h3>
+                        </div>
+                        <div class="output-actions">
+                            <button class="btn btn-sm btn-copy" onclick="copyContent('csr', this)">Copy</button>
+                            <button class="btn btn-sm btn-dl" onclick="downloadContent('csr', '.csr')">Download</button>
+                        </div>
+                    </div>
+                    <textarea id="csr" readonly placeholder="Generate to reveal the CSR."></textarea>
+                </article>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-inner">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div>
+                        <strong>PKI Workshop</strong>
+                        <div style="margin-top: 6px;">feedback, suggestions and bug submissions.</div>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <a href="#" >Support</a>
+                </div>
+            </div>
+            <div style="margin-top: 16px; font-size: 11px; text-align: center; color: var(--muted); border-top: 1px solid var(--footer-divider); padding-top: 16px;">
+                <img src="pki_logo.svg" alt="PKI Logo" style="width: 48px; height: 48px; border-radius: 8px;"><br/>
+                &copy; 2026 PKI Workshop. All rights reserved.
+            </div>
+        </footer>
+    </div>
+
+    <script>
+
+        const menuBtn = document.getElementById('menu-btn');
+        const sideMenu = document.getElementById('side-menu');
+        const menuOverlay = document.getElementById('side-menu-overlay');
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute('content', theme === 'light' ? '#f8fafc' : '#0b0f19');
+            }
+            if (themeToggle) {
+                themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+            }
+        }
+
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme') || 'dark';
+                applyTheme(current === 'dark' ? 'light' : 'dark');
+            });
+            const initialTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            themeToggle.setAttribute('aria-label', initialTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute('content', initialTheme === 'light' ? '#f8fafc' : '#0b0f19');
+            }
+        }
+
+        function toggleMenu() {
+            menuBtn.classList.toggle('active');
+            sideMenu.classList.toggle('open');
+            menuOverlay.classList.toggle('open');
+        }
+
+        menuBtn.addEventListener('click', toggleMenu);
+        menuOverlay.addEventListener('click', toggleMenu);
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.error('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        function generateRandomPassword(length = 24) {
+            const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
+            let password = '';
+            const validChars = new Uint32Array(length);
+            window.crypto.getRandomValues(validChars);
+
+            for (let index = 0; index < length; index++) {
+                password += charset[validChars[index] % charset.length];
+            }
+
+            return password;
+        }
+
+        document.getElementById('passphrase').value = generateRandomPassword();
+
+        document.getElementById('regen-pass-btn').addEventListener('click', () => {
+            const input = document.getElementById('passphrase');
+            input.style.opacity = '0.35';
+
+            setTimeout(() => {
+                input.value = generateRandomPassword();
+                input.style.opacity = '1';
+            }, 120);
+        });
+
+        document.getElementById('generate-btn').addEventListener('click', () => {
+            const passphrase = document.getElementById('passphrase').value;
+            const btn = document.getElementById('generate-btn');
+            const btnText = document.getElementById('btn-text');
+            const spinner = document.getElementById('btn-spinner');
+
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                try {
+                    const pki = forge.pki;
+                    const keys = pki.rsa.generateKeyPair(2048);
+
+                    const pemPrivate = pki.encryptRsaPrivateKey(keys.privateKey, passphrase, { algorithm: '3des' });
+                    document.getElementById('private-key').value = pemPrivate;
+
+                    const csr = pki.createCertificationRequest();
+                    csr.publicKey = keys.publicKey;
+
+                    const subjectArray = [];
+                    const cn = document.getElementById('common-name').value;
+                    if (cn) subjectArray.push({ name: 'commonName', value: cn });
+                    const o = document.getElementById('organization').value;
+                    if (o) subjectArray.push({ name: 'organizationName', value: o });
+                    const ou = document.getElementById('org-unit').value;
+                    if (ou) subjectArray.push({ name: 'organizationalUnitName', value: ou });
+                    const c = document.getElementById('country').value;
+                    if (c) subjectArray.push({ name: 'countryName', value: c });
+                    const l = document.getElementById('city').value;
+                    if (l) subjectArray.push({ name: 'localityName', value: l });
+                    const st = document.getElementById('state').value;
+                    if (st) subjectArray.push({ name: 'stateOrProvinceName', value: st });
+                    const email = document.getElementById('email').value;
+                    if (email) subjectArray.push({ name: 'emailAddress', value: email });
+
+                    csr.setSubject(subjectArray);
+                    const mtlsChecked = document.getElementById('mtls-eku').checked;
+                    if (mtlsChecked) {
+                        csr.setAttributes([{ 
+                            name: 'extensionRequest',
+                            extensions: [{
+                                name: 'extKeyUsage',
+                                serverAuth: true,
+                                clientAuth: true
+                            }]
+                        }]);
+                    }
+
+                    csr.sign(keys.privateKey);
+                    document.getElementById('csr').value = pki.certificationRequestToPem(csr);
+                    
+                    // Show the outputs section
+                    document.getElementById('outputs').style.display = 'grid';
+                } catch (error) {
+                    console.error(error);
+                    alert('An operational exception occurred during cryptographic iteration loop.');
+                } finally {
+                    btnText.style.display = 'inline-flex';
+                    spinner.style.display = 'none';
+                    btn.disabled = false;
+                }
+            }, 100);
+        });
+
+        function copyContent(elementId, btnElement) {
+            const textArea = document.getElementById(elementId);
+            if (!textArea.value) return;
+
+            navigator.clipboard.writeText(textArea.value).then(() => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = 'Copied!';
+                btnElement.style.background = 'rgba(15, 118, 110, 0.12)';
+                btnElement.style.color = '#0f766e';
+                btnElement.style.borderColor = 'rgba(15, 118, 110, 0.24)';
+
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.background = '';
+                    btnElement.style.color = '';
+                    btnElement.style.borderColor = '';
+                }, 1800);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        function downloadContent(elementId, suffix) {
+            const textArea = document.getElementById(elementId);
+            const textContent = textArea.value;
+            if (!textContent) return;
+
+            const cn = document.getElementById('common-name').value || 'cert';
+            const filename = cn + suffix;
+
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    
+        function updateOpenSSLCommand() {
+            const cn = document.getElementById('common-name').value;
+            const o = document.getElementById('organization').value;
+            const ou = document.getElementById('org-unit').value;
+            const c = document.getElementById('country').value;
+            const l = document.getElementById('city').value;
+            const st = document.getElementById('state').value;
+            const email = document.getElementById('email').value;
+
+            let subj = '';
+            if (cn) subj += `/CN=${cn}`;
+            if (o) subj += `/O=${o}`;
+            if (ou) subj += `/OU=${ou}`;
+            if (c) subj += `/C=${c}`;
+            if (l) subj += `/L=${l}`;
+            if (st) subj += `/ST=${st}`;
+            if (email) subj += `/emailAddress=${email}`;
+
+            const filename = cn ? cn.replace(/[^a-zA-Z0-9.-]/g, '_') : 'private';
+            const mtlsChecked = document.getElementById('mtls-eku').checked;
+            const extParam = mtlsChecked ? ' -addext "extendedKeyUsage=serverAuth,clientAuth"' : '';
+            const cmd = `openssl req -new -newkey rsa:2048 -nodes -keyout ${filename}.key -out ${filename}.csr -subj "${subj}"${extParam}`;
+            document.getElementById('openssl-cmd').innerText = cmd;
+        }
+
+        // Attach listeners to update dynamically
+        ['common-name', 'organization', 'org-unit', 'country', 'city', 'state', 'email'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateOpenSSLCommand);
+        });
+        document.getElementById('mtls-eku').addEventListener('change', updateOpenSSLCommand);
+        
+        // Initial call
+        updateOpenSSLCommand();
+
+        function copyCodeContent(elementId, btnElement) {
+            const codeEl = document.getElementById(elementId);
+            if (!codeEl.innerText) return;
+
+            navigator.clipboard.writeText(codeEl.innerText).then(() => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = 'Copied!';
+                btnElement.style.background = 'rgba(15, 118, 110, 0.4)';
+                btnElement.style.color = '#0f766e';
+                btnElement.style.borderColor = 'rgba(15, 118, 110, 0.8)';
+
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.background = '';
+                    btnElement.style.color = '';
+                    btnElement.style.borderColor = '';
+                }, 1800);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+    </script>
+</body>
+</html>
